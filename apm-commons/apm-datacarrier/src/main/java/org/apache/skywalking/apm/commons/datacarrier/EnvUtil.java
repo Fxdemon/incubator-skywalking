@@ -16,36 +16,37 @@
  *
  */
 
-package org.apache.skywalking.oap.server.receiver.trace.provider;
-
-import java.util.*;
+package org.apache.skywalking.apm.commons.datacarrier;
 
 /**
+ * Read value from system env.
+ *
  * @author wusheng
  */
-public class DBLatencyThresholds {
-    private Map<String, Integer> thresholds;
+public class EnvUtil {
+    public static int getInt(String envName, int defaultValue) {
+        int value = defaultValue;
+        String envValue = System.getenv(envName);
+        if (envValue != null) {
+            try {
+                value = Integer.parseInt(envValue);
+            } catch (NumberFormatException e) {
 
-    DBLatencyThresholds(String config) {
-        thresholds = new HashMap<>();
-        String[] settings = config.split(",");
-        for (String setting : settings) {
-            String[] typeValue = setting.split(":");
-            if (typeValue.length == 2) {
-                thresholds.put(typeValue[0].trim().toLowerCase(), Integer.parseInt(typeValue[1].trim()));
             }
         }
-        if (!thresholds.containsKey("default")) {
-            thresholds.put("default", 10000);
-        }
+        return value;
     }
 
-    public int getThreshold(String type) {
-        type = type.toLowerCase();
-        if (thresholds.containsKey(type)) {
-            return thresholds.get(type);
-        } else {
-            return thresholds.get("default");
+    public static long getLong(String envName, long defaultValue) {
+        long value = defaultValue;
+        String envValue = System.getenv(envName);
+        if (envValue != null) {
+            try {
+                value = Integer.parseInt(envValue);
+            } catch (NumberFormatException e) {
+
+            }
         }
+        return value;
     }
 }

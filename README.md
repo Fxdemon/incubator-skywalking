@@ -27,6 +27,7 @@ The core features are following.
 - Slow services and endpoints detected
 - Performance optimization
 - Distributed tracing and context propagation
+- Database access metric. Detect slow database access statements(including SQL statements).
 - Alarm
 
 
@@ -87,7 +88,7 @@ Follow this [document](docs/en/guides/How-to-build.md).
 A wide variety of companies and organizations use SkyWalking for research, production and commercial product.
 Here is the **User Wall** of SkyWalking.
 
-<img src="http://skywalking.apache.org/assets/users-20190209.png"/>
+<img src="http://skywalking.apache.org/assets/users-20190222.png"/>
 
 Users are encouraged to add themselves to the [PoweredBy](docs/powered-by.md) page.
 
