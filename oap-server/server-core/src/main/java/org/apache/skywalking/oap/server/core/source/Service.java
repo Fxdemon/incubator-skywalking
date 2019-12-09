@@ -20,12 +20,13 @@ package org.apache.skywalking.oap.server.core.source;
 
 import lombok.*;
 
-import static org.apache.skywalking.oap.server.core.source.DefaultScopeDefine.SERVICE;
+import static org.apache.skywalking.oap.server.core.source.DefaultScopeDefine.*;
 
 /**
  * @author wusheng, peng-yongsheng
  */
-@ScopeDeclaration(id = SERVICE, name = "Service")
+@ScopeDeclaration(id = SERVICE, name = "Service", catalog = SERVICE_CATALOG_NAME)
+@ScopeDefaultColumn.VirtualColumnDefinition(fieldName = "entityId", columnName = "entity_id", isID = true, type = String.class)
 public class Service extends Source {
     @Override public int scope() {
         return DefaultScopeDefine.SERVICE;

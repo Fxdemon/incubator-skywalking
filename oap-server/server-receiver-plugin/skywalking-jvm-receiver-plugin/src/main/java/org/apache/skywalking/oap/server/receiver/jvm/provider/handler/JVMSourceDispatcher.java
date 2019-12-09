@@ -18,7 +18,8 @@
 
 package org.apache.skywalking.oap.server.receiver.jvm.provider.handler;
 
-import java.util.List;
+import java.util.*;
+import org.apache.skywalking.apm.network.common.CPU;
 import org.apache.skywalking.apm.network.language.agent.*;
 import org.apache.skywalking.oap.server.core.*;
 import org.apache.skywalking.oap.server.core.cache.ServiceInstanceInventoryCache;
@@ -38,23 +39,23 @@ public class JVMSourceDispatcher {
 
     public JVMSourceDispatcher(ModuleManager moduleManager) {
         this.sourceReceiver = moduleManager.find(CoreModule.NAME).provider().getService(SourceReceiver.class);
-        instanceInventoryCache = moduleManager.find(CoreModule.NAME).provider().getService(ServiceInstanceInventoryCache.class);
+        this.instanceInventoryCache = moduleManager.find(CoreModule.NAME).provider().getService(ServiceInstanceInventoryCache.class);
     }
 
-    void sendMetric(int serviceInstanceId, long minuteTimeBucket, JVMMetric metric) {
+    void sendMetric(int serviceInstanceId, long minuteTimeBucket, JVMMetric metrics) {
         ServiceInstanceInventory serviceInstanceInventory = instanceInventoryCache.get(serviceInstanceId);
         int serviceId;
-        if (serviceInstanceInventory == null) {
+        if (Objects.nonNull(serviceInstanceInventory)) {
             serviceId = serviceInstanceInventory.getServiceId();
         } else {
-            logger.warn("Can't found service by service instance id from cache, service instance id is: {}", serviceInstanceId);
+            logger.warn("Can't find service by service instance id from cache, service instance id is: {}", serviceInstanceId);
             return;
         }
 
-        this.sendToCpuMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metric.getCpu());
-        this.sendToMemoryMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metric.getMemoryList());
-        this.sendToMemoryPoolMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metric.getMemoryPoolList());
-        this.sendToGCMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metric.getGcList());
+        this.sendToCpuMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metrics.getCpu());
+        this.sendToMemoryMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metrics.getMemoryList());
+        this.sendToMemoryPoolMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metrics.getMemoryPoolList());
+        this.sendToGCMetricProcess(serviceId, serviceInstanceId, minuteTimeBucket, metrics.getGcList());
     }
 
     private void sendToCpuMetricProcess(int serviceId, int serviceInstanceId, long timeBucket, CPU cpu) {
@@ -92,7 +93,8 @@ public class JVMSourceDispatcher {
         });
     }
 
-    private void sendToMemoryMetricProcess(int serviceId, int serviceInstanceId, long timeBucket, List<Memory> memories) {
+    private void sendToMemoryMetricProcess(int serviceId, int serviceInstanceId, long timeBucket,
+        List<Memory> memories) {
         memories.forEach(memory -> {
             ServiceInstanceJVMMemory serviceInstanceJVMMemory = new ServiceInstanceJVMMemory();
             serviceInstanceJVMMemory.setId(serviceInstanceId);

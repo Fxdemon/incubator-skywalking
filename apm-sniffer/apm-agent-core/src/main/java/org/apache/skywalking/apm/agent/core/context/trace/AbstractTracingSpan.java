@@ -18,15 +18,10 @@
 
 package org.apache.skywalking.apm.agent.core.context.trace;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import org.apache.skywalking.apm.agent.core.context.tag.AbstractTag;
-import org.apache.skywalking.apm.agent.core.context.tag.StringTag;
-import org.apache.skywalking.apm.agent.core.context.util.KeyValuePair;
-import org.apache.skywalking.apm.agent.core.context.util.TagValuePair;
-import org.apache.skywalking.apm.agent.core.context.util.ThrowableTransformer;
+import java.util.*;
+import org.apache.skywalking.apm.agent.core.context.*;
+import org.apache.skywalking.apm.agent.core.context.tag.*;
+import org.apache.skywalking.apm.agent.core.context.util.*;
 import org.apache.skywalking.apm.agent.core.dictionary.DictionaryUtil;
 import org.apache.skywalking.apm.network.language.agent.SpanType;
 import org.apache.skywalking.apm.network.language.agent.v2.SpanObjectV2;
@@ -45,6 +40,16 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     protected String operationName;
     protected int operationId;
     protected SpanLayer layer;
+    /**
+     * The span has been tagged in async mode, required async stop to finish.
+     */
+    protected volatile boolean isInAsyncMode = false;
+    /**
+     * The flag represents whether the span has been async stopped
+     */
+    private volatile boolean isAsyncStopped = false;
+    protected volatile AbstractTracerContext context;
+
     /**
      * The start time of this Span.
      */
@@ -321,5 +326,27 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         if (!refs.contains(ref)) {
             refs.add(ref);
         }
+    }
+
+    @Override public AbstractSpan prepareForAsync() {
+        if (isInAsyncMode) {
+            throw new RuntimeException("Prepare for async repeatedly. Span is already in async mode.");
+        }
+        context = ContextManager.awaitFinishAsync(this);
+        isInAsyncMode = true;
+        return this;
+    }
+
+    @Override public AbstractSpan asyncFinish() {
+        if (!isInAsyncMode) {
+            throw new RuntimeException("Span is not in async mode, please use '#prepareForAsync' to active.");
+        }
+        if (isAsyncStopped) {
+            throw new RuntimeException("Can not do async finish for the span repeately.");
+        }
+        this.endTime = System.currentTimeMillis();
+        context.asyncStop(this);
+        isAsyncStopped = true;
+        return this;
     }
 }
